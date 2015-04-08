@@ -1,0 +1,6 @@
+---
+- hosts: connect_me
+  sudo: yes
+
+  roles:
+    - connect_me

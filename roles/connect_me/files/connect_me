@@ -1,0 +1,20 @@
+server {
+    listen 80;
+    server_name ansibleworkshop.knowlarity.com;
+    access_log /var/log/connect_me/nginx_access.log;
+    error_log /var/log/connect_me/nginx_error.log;
+    gzip on;
+    gzip_vary on;
+    gzip_types application/* text/*;
+
+
+    location /static/ {
+    	alias /srv/www/connect_me/static/;
+    }
+
+    location / {
+        proxy_pass http://0.0.0.0:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+  }

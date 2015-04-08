@@ -1,0 +1,91 @@
+---
+- name: install base packages
+  apt: >
+      name="{{ item }}"
+      state=present
+      update_cache=yes
+  with_items:
+    - git
+    - nginx
+    - python-pip
+    - sqlite3
+    - supervisor
+
+- name: install virtualenv
+  pip: >
+      name=virtualenv
+      state=present
+      virtualenv_command=/usr/local/share/connect_me
+
+- name: install pip packages
+  pip: >
+      name={{ item }}
+      state=present
+      virtualenv=/usr/local/share/connect_me
+  with_items:
+    - django==1.4
+    - gunicorn
+
+- name: create directory to clone application
+  file: >
+      state=directory
+      path=/srv/www/connect_me
+      owner=aditya
+      group=aditya
+      mode=0755
+      recurse=yes
+
+- name: install application from git
+  sudo: no
+  git: >
+      repo=git@github.com:adityak2190/connect.me.git
+      dest=/srv/www/connect_me
+      depth=1
+      clone=yes
+      accept_hostkey=yes
+      force=yes
+
+- name: edit directory permissions
+  file: >
+      path=/srv/www/connect_me
+      mode=0755
+      recurse=yes
+
+- name: replace settings.py with one for prod
+  file: >
+      state=link
+      src=/srv/www/connect_me/connect_me/settings_prod.py
+      dest=/srv/www/connect_me/connect_me/settings.py
+      force=yes
+
+- name: run syncdb command
+  sudo: no
+  django_manage: >
+      command=syncdb
+      app_path=/srv/www/connect_me
+      virtualenv=/usr/local/share/connect_me
+
+- name: nginx sites-available configuration
+  copy: >
+      src=connect_me
+      dest=/etc/nginx/sites-available/connect_me
+
+- name: nginx sites-enabled configuration
+  file: >
+      state=link
+      src=/etc/nginx/sites-available/connect_me
+      dest=/etc/nginx/sites-enabled/connect_me
+
+- name: create directory for logging
+  file: >
+      state=directory
+      path=/var/log/connect_me/
+      mode=0755
+
+- name: copy supervisor configuration
+  copy: >
+      src=gunicorn.conf
+      dest=/etc/supervisor/conf.d/gunicorn.conf
+  notify:
+      - "restart supervisor"
+      - "restart nginx"
