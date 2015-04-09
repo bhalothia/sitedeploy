@@ -1,5 +1,7 @@
 This project contains the ansible playbook which does a full site deployment.
 
+Slides at: http://www.adikrishnan.in/static/preso/ansible-sitedeploy.html
+
 Software Components:
 - nginx
 - supervisor
